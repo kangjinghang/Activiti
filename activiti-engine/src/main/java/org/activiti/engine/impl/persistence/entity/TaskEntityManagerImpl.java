@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.activiti.engine.ActivitiException;
-import org.activiti.engine.compatibility.Activiti5CompatibilityHandler;
 import org.activiti.engine.delegate.TaskListener;
 import org.activiti.engine.delegate.event.ActivitiEventType;
 import org.activiti.engine.delegate.event.impl.ActivitiEventBuilder;
@@ -26,7 +25,6 @@ import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.activiti.engine.impl.persistence.CountingExecutionEntity;
 import org.activiti.engine.impl.persistence.entity.data.DataManager;
 import org.activiti.engine.impl.persistence.entity.data.TaskDataManager;
-import org.activiti.engine.impl.util.Activiti5Util;
 import org.activiti.engine.task.IdentityLinkType;
 import org.activiti.engine.task.Task;
 
@@ -93,13 +91,6 @@ public class TaskEntityManagerImpl extends AbstractEntityManager<TaskEntity> imp
       countingExecutionEntity.setTaskCount(countingExecutionEntity.getTaskCount() + 1);
     }
     
-    if (getEventDispatcher().isEnabled()) {
-      if (taskEntity.getAssignee() != null) {
-        getEventDispatcher().dispatchEvent(
-            ActivitiEventBuilder.createEntityEvent(ActivitiEventType.TASK_ASSIGNED, taskEntity));
-      }
-    }
-    
     getHistoryManager().recordTaskCreated(taskEntity, execution);
     getHistoryManager().recordTaskId(taskEntity);
     if (taskEntity.getFormKey() != null) {
@@ -107,17 +98,31 @@ public class TaskEntityManagerImpl extends AbstractEntityManager<TaskEntity> imp
     }
   }
   
+  
   @Override
   public void changeTaskAssignee(TaskEntity taskEntity, String assignee) {
+    changeTaskAssignee(taskEntity, assignee, true);
+  }
+  
+  @Override
+  public void changeTaskAssigneeNoEvents(TaskEntity taskEntity, String assignee) {
+    changeTaskAssignee(taskEntity, assignee, false);
+  }
+  
+  private void changeTaskAssignee(TaskEntity taskEntity, String assignee, boolean fireEvents) {
     if ( (taskEntity.getAssignee() != null && !taskEntity.getAssignee().equals(assignee)) 
         || (taskEntity.getAssignee() == null && assignee != null)) {
       taskEntity.setAssignee(assignee);
-      fireAssignmentEvents(taskEntity);
+      if (fireEvents) {
+        fireAssignmentEvents(taskEntity);
+      } else {
+        recordTaskAssignment(taskEntity);
+      }
       
       if (taskEntity.getId() != null) {
         getHistoryManager().recordTaskAssigneeChange(taskEntity.getId(), taskEntity.getAssignee());
         addAssigneeIdentityLinks(taskEntity);
-        update(taskEntity);
+        update(taskEntity, fireEvents);
       }
     }
   }
@@ -137,13 +142,17 @@ public class TaskEntityManagerImpl extends AbstractEntityManager<TaskEntity> imp
   }
   
   protected void fireAssignmentEvents(TaskEntity taskEntity) {
-    getProcessEngineConfiguration().getListenerNotificationHelper()
-      .executeTaskListeners(taskEntity, TaskListener.EVENTNAME_ASSIGNMENT);
-    getHistoryManager().recordTaskAssignment(taskEntity);
-
+    recordTaskAssignment(taskEntity);
     if (getEventDispatcher().isEnabled()) {
       getEventDispatcher().dispatchEvent(ActivitiEventBuilder.createEntityEvent(ActivitiEventType.TASK_ASSIGNED, taskEntity));
     }
+
+  }
+  
+  protected void recordTaskAssignment(TaskEntity taskEntity) {
+    getProcessEngineConfiguration().getListenerNotificationHelper()
+      .executeTaskListeners(taskEntity, TaskListener.EVENTNAME_ASSIGNMENT);
+    getHistoryManager().recordTaskAssignment(taskEntity);
 
   }
 
@@ -216,7 +225,6 @@ public class TaskEntityManagerImpl extends AbstractEntityManager<TaskEntity> imp
                       "userTask", 
                       deleteReason));
         }
-        
         getEventDispatcher().dispatchEvent(ActivitiEventBuilder.createEntityEvent(ActivitiEventType.ENTITY_DELETED, task));
       }
     }
@@ -274,26 +282,25 @@ public class TaskEntityManagerImpl extends AbstractEntityManager<TaskEntity> imp
     return taskDataManager.findTasksByParentTaskId(parentTaskId);
   }
 
+
   @Override
-  public void deleteTask(String taskId, String deleteReason, boolean cascade) {
-    
+  public void deleteTask(String taskId, String deleteReason, boolean cascade, boolean cancel) {
     TaskEntity task = findById(taskId);
 
     if (task != null) {
       if (task.getExecutionId() != null) {
         throw new ActivitiException("The task cannot be deleted because is part of a running process");
       }
-      
-      if (Activiti5Util.isActiviti5ProcessDefinitionId(getCommandContext(), task.getProcessDefinitionId())) {
-        Activiti5CompatibilityHandler activiti5CompatibilityHandler = Activiti5Util.getActiviti5CompatibilityHandler(); 
-        activiti5CompatibilityHandler.deleteTask(taskId, deleteReason, cascade);
-        return;
-      }
 
-      deleteTask(task, deleteReason, cascade, false);
+      deleteTask(task, deleteReason, cascade, cancel);
     } else if (cascade) {
       getHistoricTaskInstanceEntityManager().delete(taskId);
     }
+  }
+
+  @Override
+  public void deleteTask(String taskId, String deleteReason, boolean cascade) {
+    this.deleteTask(taskId, deleteReason, cascade, false);
   }
 
   @Override

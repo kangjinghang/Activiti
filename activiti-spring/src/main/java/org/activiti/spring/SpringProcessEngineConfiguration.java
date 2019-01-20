@@ -17,14 +17,16 @@ import org.activiti.engine.ActivitiException;
 import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.ProcessEngineConfiguration;
 import org.activiti.engine.ProcessEngines;
-import org.activiti.engine.UserGroupLookupProxy;
 import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.activiti.engine.impl.cfg.StandaloneProcessEngineConfiguration;
 import org.activiti.engine.impl.interceptor.CommandConfig;
 import org.activiti.engine.impl.interceptor.CommandInterceptor;
 import org.activiti.engine.impl.variable.EntityManagerSession;
+import org.activiti.api.runtime.shared.identity.UserGroupManager;
 import org.activiti.spring.autodeployment.AutoDeploymentStrategy;
 import org.activiti.spring.autodeployment.DefaultAutoDeploymentStrategy;
+import org.activiti.spring.autodeployment.FailOnNoProcessAutoDeploymentStrategy;
+import org.activiti.spring.autodeployment.NeverFailAutoDeploymentStrategy;
 import org.activiti.spring.autodeployment.ResourceParentFolderAutoDeploymentStrategy;
 import org.activiti.spring.autodeployment.SingleResourceAutoDeploymentStrategy;
 import org.springframework.beans.BeansException;
@@ -59,6 +61,8 @@ public class SpringProcessEngineConfiguration extends ProcessEngineConfiguration
     deploymentStrategies.add(new DefaultAutoDeploymentStrategy());
     deploymentStrategies.add(new SingleResourceAutoDeploymentStrategy());
     deploymentStrategies.add(new ResourceParentFolderAutoDeploymentStrategy());
+    deploymentStrategies.add(new FailOnNoProcessAutoDeploymentStrategy());
+    deploymentStrategies.add(new NeverFailAutoDeploymentStrategy());
   }
 
   @Override
@@ -70,8 +74,8 @@ public class SpringProcessEngineConfiguration extends ProcessEngineConfiguration
   }
 
   @Override
-  public UserGroupLookupProxy getUserGroupLookupProxy() {
-    return userGroupLookupProxy;
+  public UserGroupManager getUserGroupManager() {
+    return userGroupManager;
   }
 
   public void setTransactionSynchronizationAdapterOrder(Integer transactionSynchronizationAdapterOrder) {

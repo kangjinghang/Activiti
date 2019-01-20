@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Alfresco, Inc. and/or its affiliates.
+ * Copyright 2018 Alfresco, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,16 @@ import org.activiti.engine.impl.interceptor.Command;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextEntity;
 
-import java.util.List;
+public class RetrieveIntegrationContextsCmd implements Command<IntegrationContextEntity> {
 
-public class RetrieveIntegrationContextsCmd implements Command<List<IntegrationContextEntity>> {
+    private String integrationContextId;
 
-    private String executionId;
-
-    public RetrieveIntegrationContextsCmd(String executionId) {
-        this.executionId = executionId;
+    public RetrieveIntegrationContextsCmd(String integrationContextId) {
+        this.integrationContextId = integrationContextId;
     }
 
     @Override
-    public List<IntegrationContextEntity> execute(CommandContext commandContext) {
-        return commandContext.getProcessEngineConfiguration().getIntegrationContextManager().findIntegrationContextByExecutionId(executionId);
+    public IntegrationContextEntity execute(CommandContext commandContext) {
+        return commandContext.getProcessEngineConfiguration().getIntegrationContextManager().findById(integrationContextId);
     }
 }

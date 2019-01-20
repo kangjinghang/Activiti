@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Alfresco, Inc. and/or its affiliates.
+ * Copyright 2018 Alfresco, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import org.activiti.engine.impl.cmd.integration.RetrieveIntegrationContextsCmd;
 import org.activiti.engine.impl.interceptor.CommandExecutor;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextEntity;
 
-import java.util.List;
-
 public class IntegrationContextServiceImpl implements IntegrationContextService {
 
     private CommandExecutor commandExecutor;
@@ -32,8 +30,8 @@ public class IntegrationContextServiceImpl implements IntegrationContextService 
     }
 
     @Override
-    public List<IntegrationContextEntity> findIntegrationContextByExecutionId(String executionId) {
-        return commandExecutor.execute(new RetrieveIntegrationContextsCmd(executionId));
+    public IntegrationContextEntity findById(String id) {
+        return commandExecutor.execute(new RetrieveIntegrationContextsCmd(id));
     }
 
     @Override

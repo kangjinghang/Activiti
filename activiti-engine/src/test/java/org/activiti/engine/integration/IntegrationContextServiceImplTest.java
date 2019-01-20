@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Alfresco, Inc. and/or its affiliates.
+ * Copyright 2018 Alfresco, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,6 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-import java.util.Arrays;
-import java.util.Collection;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -49,21 +46,20 @@ public class IntegrationContextServiceImplTest {
     }
 
     @Test
-    public void findIntegrationContextByExecutionIdShouldExecuteRetrieveIntegrationContextCmd() throws Exception {
+    public void findByIdShouldExecuteRetrieveIntegrationContextCmd() {
         //given
         IntegrationContextEntity entity = mock(IntegrationContextEntity.class);
-        given(commandExecutor.execute(any(RetrieveIntegrationContextsCmd.class))).willReturn(Arrays.asList(entity));
+        given(commandExecutor.execute(any(RetrieveIntegrationContextsCmd.class))).willReturn(entity);
 
         //when
-        Collection<IntegrationContextEntity> commandResult = integrationContextService.findIntegrationContextByExecutionId("execId");
+        IntegrationContextEntity commandResult = integrationContextService.findById("id");
 
         //then
-        assertThat(commandResult).contains(entity);
-        assertThat(commandResult).hasSize(1);
+        assertThat(commandResult).isEqualTo(entity);
     }
 
     @Test
-    public void deleteIntegrationContextShouldExecuteDeleteIntegrationContextCommand() throws Exception {
+    public void deleteIntegrationContextShouldExecuteDeleteIntegrationContextCommand() {
         //given
         IntegrationContextEntity entity = mock(IntegrationContextEntity.class);
 

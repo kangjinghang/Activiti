@@ -13,12 +13,11 @@
 package org.activiti.engine.impl.cfg.multitenant;
 
 import java.util.concurrent.ExecutorService;
-
 import javax.sql.DataSource;
 
+import org.activiti.api.runtime.shared.identity.UserGroupManager;
 import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.ProcessEngineConfiguration;
-import org.activiti.engine.UserGroupLookupProxy;
 import org.activiti.engine.impl.asyncexecutor.AsyncExecutor;
 import org.activiti.engine.impl.asyncexecutor.multitenant.ExecutorPerTenantAsyncExecutor;
 import org.activiti.engine.impl.asyncexecutor.multitenant.SharedExecutorServiceAsyncExecutor;
@@ -170,7 +169,7 @@ public class MultiSchemaMultiTenantProcessEngineConfiguration extends ProcessEng
   }
 
   @Override
-  public UserGroupLookupProxy getUserGroupLookupProxy() {
+  public UserGroupManager getUserGroupManager() {
     return null; //no external identity provider supplied
   }
 }

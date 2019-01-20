@@ -25,9 +25,11 @@ import org.activiti.engine.DynamicBpmnConstants;
 import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.delegate.Expression;
 import org.activiti.engine.delegate.TaskListener;
+import org.activiti.engine.delegate.event.ActivitiEventDispatcher;
 import org.activiti.engine.delegate.event.ActivitiEventType;
 import org.activiti.engine.delegate.event.impl.ActivitiEventBuilder;
 import org.activiti.engine.impl.bpmn.helper.SkipExpressionUtil;
+import org.activiti.engine.impl.bpmn.helper.TaskVariableCopier;
 import org.activiti.engine.impl.calendar.BusinessCalendar;
 import org.activiti.engine.impl.calendar.DueDateBusinessCalendar;
 import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
@@ -192,9 +194,14 @@ public class UserTaskActivityBehavior extends TaskActivityBehavior {
         }
       }
     }
-    
+
+
     taskEntityManager.insert(task, (ExecutionEntity) execution);
-    
+
+    if(commandContext.getProcessEngineConfiguration().isCopyVariablesToLocalForTasks()) {
+      TaskVariableCopier.copyVariablesIntoTaskLocal(task);
+    }
+
     boolean skipUserTask = false;
     if (StringUtils.isNotEmpty(activeTaskSkipExpression)) {
       Expression skipExpression = expressionManager.createExpression(activeTaskSkipExpression);
@@ -210,17 +217,22 @@ public class UserTaskActivityBehavior extends TaskActivityBehavior {
     
     processEngineConfiguration.getListenerNotificationHelper().executeTaskListeners(task, TaskListener.EVENTNAME_CREATE);
     
-    // All properties set, now firing 'create' events
+    // All properties set, now fire events
     if (Context.getProcessEngineConfiguration().getEventDispatcher().isEnabled()) {
-      Context.getProcessEngineConfiguration().getEventDispatcher().dispatchEvent(
+      ActivitiEventDispatcher eventDispatcher = Context.getProcessEngineConfiguration().getEventDispatcher();
+      eventDispatcher.dispatchEvent(
           ActivitiEventBuilder.createEntityEvent(ActivitiEventType.TASK_CREATED, task));
+      if (task.getAssignee() != null) {
+        eventDispatcher.dispatchEvent(
+                ActivitiEventBuilder.createEntityEvent(ActivitiEventType.TASK_ASSIGNED, task));
+      }
     }
     
     if (skipUserTask) {
       taskEntityManager.deleteTask(task, null, false, false);
       leave(execution);
     }
-    
+
   }
 
   public void trigger(DelegateExecution execution, String signalName, Object signalData) {
@@ -232,7 +244,6 @@ public class UserTaskActivityBehavior extends TaskActivityBehavior {
         throw new ActivitiException("UserTask should not be signalled before complete");
       }
     }
-    
     leave(execution);
   }
 
@@ -247,7 +258,7 @@ public class UserTaskActivityBehavior extends TaskActivityBehavior {
         assigneeValue = assigneeExpressionValue.toString();
       }
 
-      taskEntityManager.changeTaskAssignee(task, assigneeValue);
+      taskEntityManager.changeTaskAssigneeNoEvents(task, assigneeValue);
     }
 
     if (StringUtils.isNotEmpty(owner)) {

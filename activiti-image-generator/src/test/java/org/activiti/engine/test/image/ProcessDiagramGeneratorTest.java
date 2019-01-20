@@ -1,6 +1,7 @@
 package org.activiti.engine.test.image;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -12,10 +13,16 @@ import org.activiti.engine.impl.test.PluggableActivitiTestCase;
 import org.activiti.engine.task.Task;
 import org.activiti.engine.test.Deployment;
 import org.activiti.image.ProcessDiagramGenerator;
+import org.activiti.image.exception.ActivitiImageException;
+import org.activiti.image.exception.ActivitiInterchangeInfoNotFoundException;
 import org.activiti.image.impl.DefaultProcessDiagramGenerator;
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
 import org.apache.batik.anim.dom.SVGOMDocument;
 import org.apache.batik.util.XMLResourceDescriptor;
+import org.apache.commons.io.IOUtils;
+
+import static java.util.Collections.emptyList;
+import static org.assertj.core.api.Assertions.*;
 
 public class ProcessDiagramGeneratorTest extends PluggableActivitiTestCase {
 
@@ -65,6 +72,47 @@ public class ProcessDiagramGeneratorTest extends PluggableActivitiTestCase {
     }
 
     @Deployment
+    public void testSmallBoxLabels() throws Exception {
+        ProcessDiagramGenerator imageGenerator = new DefaultProcessDiagramGenerator();
+        String activityFontName = imageGenerator.getDefaultActivityFontName();
+        String labelFontName = imageGenerator.getDefaultLabelFontName();
+        String annotationFontName = imageGenerator.getDefaultAnnotationFontName();
+
+        String id = repositoryService.createProcessDefinitionQuery().processDefinitionKey("myProcess").singleResult()
+                .getId();
+
+        List<String> activityIds = new ArrayList<>();
+        List<String> highLightedFlows = new ArrayList<>();
+        InputStream diagram = imageGenerator.generateDiagram(repositoryService.getBpmnModel(id),
+                                                 activityIds, highLightedFlows);
+        assertNotNull(diagram);
+
+        diagram = imageGenerator.generateDiagram(repositoryService.getBpmnModel(id),
+                                                 activityIds, highLightedFlows, activityFontName, labelFontName, annotationFontName);
+        assertNotNull(diagram);
+    }
+    @Deployment
+    public void testTransactionElements() throws Exception {
+        ProcessDiagramGenerator imageGenerator = new DefaultProcessDiagramGenerator();
+        String activityFontName = imageGenerator.getDefaultActivityFontName();
+        String labelFontName = imageGenerator.getDefaultLabelFontName();
+        String annotationFontName = imageGenerator.getDefaultAnnotationFontName();
+
+        String id = repositoryService.createProcessDefinitionQuery().processDefinitionKey("transactionSubRequest").singleResult()
+                .getId();
+
+        List<String> activityIds = new ArrayList<>();
+        List<String> highLightedFlows = new ArrayList<>();
+        InputStream diagram = imageGenerator.generateDiagram(repositoryService.getBpmnModel(id),
+                                                 activityIds, highLightedFlows);
+        assertNotNull(diagram);
+
+        diagram = imageGenerator.generateDiagram(repositoryService.getBpmnModel(id),
+                                                 activityIds, highLightedFlows, activityFontName, labelFontName, annotationFontName);
+        assertNotNull(diagram);
+    }
+
+    @Deployment
     public void testAllElements() throws Exception {
         ProcessDiagramGenerator imageGenerator = new DefaultProcessDiagramGenerator();
         String activityFontName = imageGenerator.getDefaultActivityFontName();
@@ -104,6 +152,72 @@ public class ProcessDiagramGeneratorTest extends PluggableActivitiTestCase {
                                                         "endevent11", "endevent12");
             checkDiagramElements(endEventIdList, svg);
         }
+    }
+
+    /**
+     * Test that when the diagram is generated for a model without graphic info
+     * then the default diagram image is returned
+     * or the ActivitiInterchangeInfoNotFoundException is thrown
+     * depending on the value of the generateDefaultDiagram parameter.
+     *
+     */
+    @Deployment
+    public void testGenerateDefaultDiagram() throws Exception {
+        //GIVEN
+        String id = repositoryService
+                .createProcessDefinitionQuery()
+                .processDefinitionKey("fixSystemFailure")
+                .singleResult()
+                .getId();
+        BpmnModel bpmnModel = repositoryService.getBpmnModel(id);
+
+        ProcessDiagramGenerator imageGenerator = new DefaultProcessDiagramGenerator();
+        String activityFontName = imageGenerator.getDefaultActivityFontName();
+        String labelFontName = imageGenerator.getDefaultLabelFontName();
+        String annotationFontName = imageGenerator.getDefaultAnnotationFontName();
+
+        //WHEN
+        try (final InputStream resourceStream = imageGenerator.generateDiagram(bpmnModel,
+                                                                               emptyList(),
+                                                                               emptyList(),
+                                                                               activityFontName,
+                                                                               labelFontName,
+                                                                               annotationFontName,
+                                                                               true)) {
+            //THEN
+            assertThat(resourceStream).isNotNull();
+            byte[] diagram = IOUtils.toByteArray(resourceStream);
+            assertThat(diagram).isNotNull();
+
+            try (InputStream imageStream = getClass().getResourceAsStream(imageGenerator.getDefaultDiagramImageFileName())) {
+                assertThat(diagram).isEqualTo(IOUtils.toByteArray(imageStream));
+            }
+        }
+
+        //THEN
+        assertThatExceptionOfType(ActivitiInterchangeInfoNotFoundException.class).isThrownBy(
+            //WHEN
+            () -> imageGenerator.generateDiagram(bpmnModel,
+                                                 emptyList(),
+                                                 emptyList(),
+                                                 activityFontName,
+                                                 labelFontName,
+                                                 annotationFontName,
+                                                 false)
+        ).withMessage("No interchange information found.");
+
+        //THEN
+        assertThatExceptionOfType(ActivitiImageException.class).isThrownBy(
+            //WHEN
+            () -> imageGenerator.generateDiagram(bpmnModel,
+                                                 emptyList(),
+                                                 emptyList(),
+                                                 activityFontName,
+                                                 labelFontName,
+                                                 annotationFontName,
+                                                 true,
+                                                 "invalid-file-name")
+        ).withMessage("Error occurred while getting default diagram image from file: invalid-file-name");
     }
 
     private void checkDiagramElements(List<String> elementIdList, SVGOMDocument svg) {

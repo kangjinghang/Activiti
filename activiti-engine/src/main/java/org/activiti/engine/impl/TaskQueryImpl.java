@@ -16,10 +16,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.activiti.api.runtime.shared.identity.UserGroupManager;
 import org.activiti.engine.ActivitiException;
 import org.activiti.engine.ActivitiIllegalArgumentException;
 import org.activiti.engine.DynamicBpmnConstants;
-import org.activiti.engine.UserGroupLookupProxy;
 import org.activiti.engine.impl.context.Context;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.interceptor.CommandExecutor;
@@ -28,9 +30,6 @@ import org.activiti.engine.impl.variable.VariableTypes;
 import org.activiti.engine.task.DelegationState;
 import org.activiti.engine.task.Task;
 import org.activiti.engine.task.TaskQuery;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +49,7 @@ public class TaskQueryImpl extends AbstractVariableQueryImpl<TaskQuery, Task> im
   protected String name;
   protected String nameLike;
   protected String nameLikeIgnoreCase;
+  protected String taskParentTaskId;
   protected List<String> nameList;
   protected List<String> nameListIgnoreCase;
   protected String description;
@@ -626,6 +626,15 @@ public class TaskQueryImpl extends AbstractVariableQueryImpl<TaskQuery, Task> im
       currentOrQueryObject.withoutTenantId = true;
     } else {
       this.withoutTenantId = true;
+    }
+    return this;
+  }
+
+  public TaskQuery taskParentTaskId(String parentTaskId) {
+    if (orActive) {
+      this.currentOrQueryObject.taskParentTaskId = parentTaskId;
+    } else {
+      this.taskParentTaskId = parentTaskId;
     }
     return this;
   }
@@ -1210,11 +1219,11 @@ public class TaskQueryImpl extends AbstractVariableQueryImpl<TaskQuery, Task> im
   }
 
   protected List<String> getGroupsForCandidateUser(String candidateUser) {
-    UserGroupLookupProxy userGroupLookupProxy = Context.getProcessEngineConfiguration().getUserGroupLookupProxy();
-    if(userGroupLookupProxy !=null){
-      return userGroupLookupProxy.getGroupsForCandidateUser(candidateUser);
+    UserGroupManager userGroupManager = Context.getProcessEngineConfiguration().getUserGroupManager();
+    if(userGroupManager !=null){
+      return userGroupManager.getUserGroups(candidateUser);
     } else{
-      log.warn("No UserGroupLookupProxy set on ProcessEngineConfiguration. Tasks queried only where user is directly related, not through groups.");
+      log.warn("No UserGroupManager set on ProcessEngineConfiguration. Tasks queried only where user is directly related, not through groups.");
     }
     return null;
   }
@@ -1554,6 +1563,10 @@ public class TaskQueryImpl extends AbstractVariableQueryImpl<TaskQuery, Task> im
 
   public String getOwnerLike() {
     return ownerLike;
+  }
+
+  public String getTaskParentTaskId() {
+    return taskParentTaskId;
   }
 
   public String getCategory() {

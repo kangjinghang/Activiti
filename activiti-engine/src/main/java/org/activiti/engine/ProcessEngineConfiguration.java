@@ -12,6 +12,12 @@
  */
 package org.activiti.engine;
 
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import javax.sql.DataSource;
+
+import org.activiti.api.runtime.shared.identity.UserGroupManager;
 import org.activiti.engine.cfg.MailServerInfo;
 import org.activiti.engine.impl.asyncexecutor.AsyncExecutor;
 import org.activiti.engine.impl.cfg.BeansConfigurationHelper;
@@ -21,11 +27,6 @@ import org.activiti.engine.impl.history.HistoryLevel;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextManager;
 import org.activiti.engine.integration.IntegrationContextService;
 import org.activiti.engine.runtime.Clock;
-
-import javax.sql.DataSource;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Configuration information from which a process engine can be build.
@@ -117,7 +118,6 @@ public abstract class ProcessEngineConfiguration {
   protected String jdbcUsername = "sa";
   protected String jdbcPassword = "";
   protected String dataSourceJndiName;
-  protected boolean isDbIdentityUsed = true;
   protected boolean isDbHistoryUsed = true;
   protected HistoryLevel historyLevel;
   protected int jdbcMaxActiveConnections;
@@ -201,6 +201,8 @@ public abstract class ProcessEngineConfiguration {
   protected boolean enableProcessDefinitionInfoCache = false;
   protected ActivitiEngineAgendaFactory engineAgendaFactory;
 
+  protected boolean copyVariablesToLocalForTasks = false;
+
   /** use one of the static createXxxx methods instead */
   protected ProcessEngineConfiguration() {
   }
@@ -235,12 +237,6 @@ public abstract class ProcessEngineConfiguration {
     return new StandaloneInMemProcessEngineConfiguration();
   }
 
-  // TODO add later when we have test coverage for this
-  // public static ProcessEngineConfiguration
-  // createJtaProcessEngineConfiguration() {
-  // return new JtaProcessEngineConfiguration();
-  // }
-
   public abstract RepositoryService getRepositoryService();
 
   public abstract RuntimeService getRuntimeService();
@@ -253,7 +249,7 @@ public abstract class ProcessEngineConfiguration {
 
   public abstract ProcessEngineConfiguration getProcessEngineConfiguration();
 
-  public abstract UserGroupLookupProxy getUserGroupLookupProxy();
+  public abstract UserGroupManager getUserGroupManager();
 
   public abstract IntegrationContextService getIntegrationContextService();
 
@@ -465,15 +461,6 @@ public abstract class ProcessEngineConfiguration {
 
   public ProcessEngineConfiguration setHistoryLevel(HistoryLevel historyLevel) {
     this.historyLevel = historyLevel;
-    return this;
-  }
-
-  public boolean isDbIdentityUsed() {
-    return isDbIdentityUsed;
-  }
-
-  public ProcessEngineConfiguration setDbIdentityUsed(boolean isDbIdentityUsed) {
-    this.isDbIdentityUsed = isDbIdentityUsed;
     return this;
   }
 
@@ -757,10 +744,19 @@ public abstract class ProcessEngineConfiguration {
     return this;
   }
 
+  public ProcessEngineConfiguration setCopyVariablesToLocalForTasks(boolean copyVariablesToLocalForTasks) {
+    this.copyVariablesToLocalForTasks = copyVariablesToLocalForTasks;
+    return this;
+  }
+
+  public boolean isCopyVariablesToLocalForTasks(){
+    return copyVariablesToLocalForTasks;
+  }
+
   public void setEngineAgendaFactory(ActivitiEngineAgendaFactory engineAgendaFactory) {
     this.engineAgendaFactory = engineAgendaFactory;
   }
-  
+
   public ActivitiEngineAgendaFactory getEngineAgendaFactory() {
     return engineAgendaFactory;
   }

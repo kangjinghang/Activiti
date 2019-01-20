@@ -1,22 +1,17 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
-  <name>Activiti - BPMN Layout</name>
-  <artifactId>activiti-bpmn-layout</artifactId>
 
   <parent>
     <groupId>org.activiti</groupId>
-    <artifactId>activiti-root</artifactId>
-    <version>7-201801-EA-SNAPSHOT</version>
+    <artifactId>activiti-core-dependencies</artifactId>
+    <version>7.0.0-SNAPSHOT</version>
+    <relativePath>../activiti-core-dependencies</relativePath>
   </parent>
 
-  <properties>
-    <activiti.artifact>
-      org.activiti.bpmn.layout
-    </activiti.artifact>
-  </properties>
-
+  <artifactId>activiti-bpmn-layout</artifactId>
+  <name>Activiti :: BPMN Layout</name>
 
   <dependencies>
     <dependency>
@@ -32,7 +27,7 @@
       <artifactId>jcl-over-slf4j</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.tinyjee.jgraphx</groupId>
+      <groupId>com.github.vlsi.mxgraph</groupId>
       <artifactId>jgraphx</artifactId>
     </dependency>
     <dependency>
@@ -41,4 +36,5 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
+
 </project>

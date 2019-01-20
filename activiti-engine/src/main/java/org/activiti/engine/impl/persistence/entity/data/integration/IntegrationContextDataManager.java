@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Alfresco, Inc. and/or its affiliates.
+ * Copyright 2018 Alfresco, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,6 @@ package org.activiti.engine.impl.persistence.entity.data.integration;
 import org.activiti.engine.impl.persistence.entity.data.DataManager;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextEntity;
 
-import java.util.List;
-
 public interface IntegrationContextDataManager extends DataManager<IntegrationContextEntity> {
-
-    List<IntegrationContextEntity> findIntegrationContextByExecutionId(final String executionId);
 
 }

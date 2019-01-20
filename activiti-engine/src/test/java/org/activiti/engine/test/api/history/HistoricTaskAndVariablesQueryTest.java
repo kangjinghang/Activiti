@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.activiti.engine.UserGroupLookupProxy;
+import org.activiti.api.runtime.shared.identity.UserGroupManager;
 import org.activiti.engine.history.HistoricTaskInstance;
 import org.activiti.engine.history.HistoricTaskInstanceQuery;
 import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
@@ -48,11 +48,11 @@ public class HistoricTaskAndVariablesQueryTest extends PluggableActivitiTestCase
     private static final String FOZZIE = "fozzie";
     private static final List<String> FOZZIESGROUPS = Arrays.asList("management");
 
-    private UserGroupLookupProxy userGroupLookupProxy = Mockito.mock(UserGroupLookupProxy.class);
+    private UserGroupManager userGroupManager = Mockito.mock(UserGroupManager.class);
 
     public void setUp() throws Exception {
         ProcessEngineConfigurationImpl engineConfiguration = (ProcessEngineConfigurationImpl) cachedProcessEngine.getProcessEngineConfiguration();
-        engineConfiguration.setUserGroupLookupProxy(userGroupLookupProxy);
+        engineConfiguration.setUserGroupManager(userGroupManager);
         taskIds = generateTestTasks();
     }
 
@@ -564,9 +564,9 @@ public class HistoricTaskAndVariablesQueryTest extends PluggableActivitiTestCase
     public void testCandidateWithUserGroupProxy() {
         //don't specify groups in query calls, instead get them through UserGroupLookupProxy (which could be remote service)
 
-        Mockito.when(userGroupLookupProxy.getGroupsForCandidateUser(KERMIT)).thenReturn(KERMITSGROUPS);
-        Mockito.when(userGroupLookupProxy.getGroupsForCandidateUser(GONZO)).thenReturn(GONZOSGROUPS);
-        Mockito.when(userGroupLookupProxy.getGroupsForCandidateUser(FOZZIE)).thenReturn(FOZZIESGROUPS);
+        Mockito.when(userGroupManager.getUserGroups(KERMIT)).thenReturn(KERMITSGROUPS);
+        Mockito.when(userGroupManager.getUserGroups(GONZO)).thenReturn(GONZOSGROUPS);
+        Mockito.when(userGroupManager.getUserGroups(FOZZIE)).thenReturn(FOZZIESGROUPS);
 
         if (processEngineConfiguration.getHistoryLevel().isAtLeast(HistoryLevel.ACTIVITY)) {
             runtimeService.startProcessInstanceByKey("oneTaskProcess");

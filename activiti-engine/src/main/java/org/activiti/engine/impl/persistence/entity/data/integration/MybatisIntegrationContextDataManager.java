@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Alfresco, Inc. and/or its affiliates.
+ * Copyright 2018 Alfresco, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@ import org.activiti.engine.impl.persistence.entity.data.AbstractDataManager;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextEntity;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextEntityImpl;
 
-import java.util.List;
-
 public class MybatisIntegrationContextDataManager extends AbstractDataManager<IntegrationContextEntity> implements IntegrationContextDataManager {
 
     public MybatisIntegrationContextDataManager(ProcessEngineConfigurationImpl processEngineConfiguration) {
@@ -39,10 +37,4 @@ public class MybatisIntegrationContextDataManager extends AbstractDataManager<In
         return IntegrationContextEntityImpl.class;
     }
 
-    @Override
-    public List<IntegrationContextEntity> findIntegrationContextByExecutionId(String executionId) {
-        return (List<IntegrationContextEntity>) getDbSqlSession().selectList("selectIntegrationContextByExecutionId",
-                                                                      executionId);
-
-    }
 }
